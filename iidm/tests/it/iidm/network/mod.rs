@@ -1,6 +1,7 @@
 mod identifiable;
 mod serialization;
 mod update;
+mod xml;
 
 use std::str::FromStr;
 
