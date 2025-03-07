@@ -1,17 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Serialize};
 
-const NETWORK_FILE: &str = "tests/data/network.xiidm";
-
-// Définition des structures
-#[derive(Debug, Serialize, Deserialize)]
-struct Root {
-    #[serde(rename = "xmlns:iidm")]
-    xmlns_p: Option<String>,
-
-    #[serde(rename = "iidm:network")]
-    element: Network,
-}
+const NETWORK_XML: &str = "tests/data/network.xiidm";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Network {
@@ -41,6 +31,10 @@ struct Network {
 struct Substation {
     #[serde(rename = "@id")]
     pub id: String,
+    #[serde(rename = "@tso")]
+    pub tso: String,
+    #[serde(rename = "@geographicalTags")]
+    pub geographical_tags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +45,7 @@ struct Line {
 
 #[test]
 fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
-    let test_network = std::fs::read_to_string(NETWORK_FILE)?;
+    let test_network = std::fs::read_to_string(NETWORK_XML)?;
     let network: Network = quick_xml::de::from_str(&test_network)?;
 
     assert_eq!(network.id, "sim1");
@@ -60,6 +54,16 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(network.minimum_validation_level, "STEADY_STATE_HYPOTHESIS");
 
     assert_eq!(network.substations.len(), 2);
+
+    assert_eq!(
+        network.substations[0].geographical_tags.get(0).unwrap(),
+        "A"
+    );
+    assert_eq!(
+        network.substations[1].geographical_tags.get(0).unwrap(),
+        "B"
+    );
+
     assert_eq!(network.lines.len(), 2);
 
     Ok(())

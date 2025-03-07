@@ -29,7 +29,7 @@ pub struct Network {
     #[serde(rename = "minimumValidationLevel")]
     pub minimum_validation_level: String,
 
-    #[serde(default)]
+    #[serde(rename = "substations", default)]
     pub substations: Vec<Substation>,
 
     #[serde(default)]
@@ -54,12 +54,10 @@ pub struct Network {
     #[serde(default)]
     pub dangling_lines: Vec<DanglingLine>,
 
-    #[serde(rename = "tieLines")]
-    #[serde(default)]
+    #[serde(rename = "tieLines", default)]
     pub tie_lines: Vec<TieLine>,
 
-    #[serde(rename = "hvdcLines")]
-    #[serde(default)]
+    #[serde(rename = "hvdcLines", default)]
     pub hvdc_lines: Vec<HvdcLine>,
 }
 
