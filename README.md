@@ -1,3 +1,13 @@
+```
+::::    ::::  :::::::::: ::::    ::: :::::::::::  ::::::::  :::::::::  
++:+:+: :+:+:+ :+:        :+:+:   :+:     :+:     :+:    :+: :+:    :+: 
++:+ +:+:+ +:+ +:+        :+:+:+  +:+     +:+     +:+    +:+ +:+    +:+ 
++#+  +:+  +#+ +#++:++#   +#+ +:+ +#+     +#+     +#+    +:+ +#++:++#:  
++#+       +#+ +#+        +#+  +#+#+#     +#+     +#+    +#+ +#+    +#+ 
+#+#       #+# #+#        #+#   #+#+#     #+#     #+#    #+# #+#    #+# 
+###       ### ########## ###    ####     ###      ########  ###    ### 
+```
+
 # MENTOR
 
 MENTOR (Model Electrical Network Training Operational Reality) is a Rust-based simulation orchestrator designed to model, analyze, and optimize electrical networks with a focus on training scenarios for operational reality.
