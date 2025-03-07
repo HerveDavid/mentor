@@ -7,12 +7,16 @@ use serde::{Deserialize, Serialize};
 pub struct Network {
     #[serde(rename = "@id")]
     pub id: String,
+
     #[serde(rename = "@caseDate")]
     pub case_date: DateTime<FixedOffset>,
+
     #[serde(rename = "@forecastDistance")]
     pub forecast_distance: i32,
+
     #[serde(rename = "@sourceFormat")]
     pub source_format: String,
+
     #[serde(rename = "@minimumValidationLevel")]
     pub minimum_validation_level: String,
 
@@ -49,12 +53,15 @@ pub struct Network {
 pub struct Substation {
     #[serde(rename = "@id")]
     pub id: String,
+
     #[serde(rename = "@country")]
     pub country: String,
+
     #[serde(rename = "@tso")]
     pub tso: String,
+
     #[serde(rename = "@geographicalTags")]
-    pub geographical_tags: Vec<String>, // Note: in XML this is a space-separated string, not a Vec
+    pub geographical_tags: Vec<String>,
 
     #[serde(rename = "voltageLevel", default)]
     pub voltage_levels: Vec<VoltageLevel>,
@@ -68,8 +75,10 @@ pub struct Substation {
 pub struct VoltageLevel {
     #[serde(rename = "@id")]
     pub id: String,
+
     #[serde(rename = "@nominalV")]
     pub nominal_v: f64,
+
     #[serde(rename = "@topologyKind")]
     pub topology_kind: TopologyKind,
 
@@ -96,14 +105,15 @@ pub enum TopologyKind {
     BusBreaker,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EnergySource {
-    HYDRO,
-    NUCLEAR,
-    WIND,
-    THERMAL,
-    SOLAR,
-    OTHER,
+    Hydro,
+    Nuclear,
+    Wind,
+    Thermal,
+    Solar,
+    Other,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -187,10 +197,11 @@ pub struct Load {
     pub zip_model: Option<ZipLoadModel>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LoadType {
-    UNDEFINED,
-    AUXILIARY,
+    Undefined,
+    Auxiliary,
     FICTITIOUS,
 }
 

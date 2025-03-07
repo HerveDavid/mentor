@@ -42,7 +42,7 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(vlgen.generators.len(), 1);
     let gen = &vlgen.generators[0];
     assert_eq!(gen.id, "GEN");
-    assert_eq!(gen.energy_source, EnergySource::OTHER);
+    assert_eq!(gen.energy_source, EnergySource::Other);
     assert_eq!(gen.min_p, -9999.99);
     assert_eq!(gen.max_p, 9999.99);
     assert!(gen.voltage_regulator_on);
@@ -101,7 +101,7 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(vlload.loads.len(), 1);
     let load = &vlload.loads[0];
     assert_eq!(load.id, "LOAD");
-    assert_eq!(load.load_type, LoadType::UNDEFINED);
+    assert_eq!(load.load_type, LoadType::Undefined);
     assert_eq!(load.p0, 600.0);
     assert_eq!(load.q0, 200.0);
     assert_eq!(load.bus, "NLOAD");
