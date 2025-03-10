@@ -5,21 +5,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::extensions::Identifiable;
 
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct Identifiable {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-
-//     #[serde(rename = "@name", default)]
-//     pub name: String,
-
-//     #[serde(rename = "@fictitious", default)]
-//     pub fictitious: bool,
-
-//     #[serde(rename = "property", default)]
-//     pub properties: Vec<Property>,
-// }
-
 #[derive(Debug, Clone, Serialize, Deserialize, Component, Identifiable)]
 #[serde(rename_all = "camelCase")]
 pub struct Network {
