@@ -18,7 +18,7 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
                 // Register self first
                 {
                     let mut event_writer = world.resource_mut::<bevy_ecs::event::Events<crate::plugins::RegisterEvent<Self>>>();
-                    event_writer.send(RegisterEvent {
+                    event_writer.send(crate::plugins::RegisterEvent {
                         id: self.id(),
                         component: self.clone(),
                     });
