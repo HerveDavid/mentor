@@ -122,12 +122,12 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(rtc.tap_position, 1);
     assert_eq!(rtc.target_deadband, 0.0);
     assert!(rtc.load_tap_changing_capabilities);
-    assert_eq!(rtc.regulation_mode, RatioRegulationMode::VOLTAGE);
+    assert_eq!(rtc.regulation_mode, RatioRegulationMode::Voltage);
     assert_eq!(rtc.regulation_value, 158.0);
 
     // Vérification de la référence de terminal du RTC
     assert_eq!(rtc.terminal_ref.id, "NHV2_NLOAD");
-    assert_eq!(rtc.terminal_ref.side, Side::TWO);
+    assert_eq!(rtc.terminal_ref.side, Side::Two);
 
     // Vérification des étapes du RTC
     assert_eq!(rtc.steps.len(), 3);

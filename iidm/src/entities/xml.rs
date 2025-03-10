@@ -202,7 +202,7 @@ pub struct Load {
 pub enum LoadType {
     Undefined,
     Auxiliary,
-    FICTITIOUS,
+    Fictitious,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -456,17 +456,19 @@ pub struct PhaseTapChanger {
     pub steps: Vec<PhaseTapStep>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PhaseRegulationMode {
-    CURRENT_LIMITER,
-    ACTIVE_POWER_CONTROL,
-    FIXED_TAP,
+    CurrentLimiter,
+    ActivePowerControl,
+    FixedTap,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RatioRegulationMode {
-    VOLTAGE,
-    REACTIVE_POWER,
+    Voltage,
+    ReactivePower,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -525,11 +527,12 @@ pub struct Switch {
     pub voltage_level_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SwitchKind {
-    BREAKER,
-    DISCONNECTOR,
-    LOAD_BREAK_SWITCH,
+    Breaker,
+    Disconnector,
+    LoadBreakSwitch,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -570,11 +573,12 @@ pub struct StaticVarCompensator {
     pub connectable_bus: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StaticVarCompensatorRegulationMode {
-    VOLTAGE,
-    REACTIVE_POWER,
-    OFF,
+    Voltage,
+    ReactivePower,
+    Off,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -662,10 +666,11 @@ pub struct HvdcConverterStation {
     pub reactive_power_setpoint: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ConvertersMode {
-    SIDE1_RECTIFIER_SIDE2_INVERTER,
-    SIDE1_INVERTER_SIDE2_RECTIFIER,
+    Side1RectifierSide2Inverter,
+    Side1InverterSide2Rectifier,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -726,9 +731,10 @@ pub struct TemporaryLimit {
     pub value: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Side {
-    ONE,
-    TWO,
-    THREE,
+    One,
+    Two,
+    Three,
 }
