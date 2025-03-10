@@ -1,4 +1,4 @@
-use derive_more::{Display, Error};
+use derive_more::Display;
 use iidm::xml::*;
 use quick_xml::DeError;
 
@@ -21,7 +21,7 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
 
     // Vérification du premier poste (P1)
     let substation1 = &network.substations[0];
-    assert_eq!(substation1.id, "P1");
+    assert_eq!(substation1.identifiable.id, "P1");
     assert_eq!(substation1.country, "FR");
     assert_eq!(substation1.tso, "RTE");
     assert_eq!(substation1.geographical_tags.get(0).unwrap(), "A");
@@ -87,7 +87,7 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
 
     // Vérification du deuxième poste (P2)
     let substation2 = &network.substations[1];
-    assert_eq!(substation2.id, "P2");
+    assert_eq!(substation2.identifiable.id, "P2");
     assert_eq!(substation2.country, "FR");
     assert_eq!(substation2.tso, "RTE");
     assert_eq!(substation2.geographical_tags.get(0).unwrap(), "B");

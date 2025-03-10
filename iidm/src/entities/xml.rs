@@ -2,7 +2,21 @@ use chrono::{DateTime, FixedOffset};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-/// Structure racine du réseau
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Identifiable {
+    #[serde(rename = "@id")]
+    pub id: String,
+
+    #[serde(rename = "@name", default)]
+    pub name: String,
+
+    #[serde(rename = "@fictitious", default)]
+    pub fictitious: bool,
+
+    #[serde(rename = "property", default)]
+    pub properties: Vec<Property>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Network {
@@ -47,20 +61,34 @@ pub struct Network {
 
     #[serde(rename = "hvdcLine", default)]
     pub hvdc_lines: Vec<HvdcLine>,
+
+    #[serde(rename = "property", default)]
+    pub properties: Vec<Property>,
 }
 
-/// Structure représentant une sous-station
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Property {
+    #[serde(rename = "@name")]
+    pub name: String,
+    #[serde(rename = "@value", default)]
+    pub value: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Substation {
-    #[serde(rename = "@id")]
-    pub id: String,
+    #[serde(flatten)]
+    pub identifiable: Identifiable,
 
     #[serde(rename = "@country")]
     pub country: String,
 
     #[serde(rename = "@tso", default)]
     pub tso: String,
+
+    #[serde(rename = "property", default)]
+    pub properties: Vec<Property>,
 
     #[serde(rename = "@geographicalTags", default)]
     pub geographical_tags: Vec<String>,
@@ -72,7 +100,6 @@ pub struct Substation {
     pub two_windings_transformers: Vec<TwoWindingsTransformer>,
 }
 
-/// Structure représentant un niveau de tension
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoltageLevel {
@@ -101,7 +128,6 @@ pub struct VoltageLevel {
     pub busbar_sections: Vec<BusbarSection>,
 }
 
-/// Types de topologie
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TopologyKind {
@@ -109,7 +135,6 @@ pub enum TopologyKind {
     BusBreaker,
 }
 
-/// Types de source d'énergie
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EnergySource {
@@ -121,7 +146,6 @@ pub enum EnergySource {
     Other,
 }
 
-/// Structure représentant un générateur
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Generator {
@@ -162,7 +186,6 @@ pub struct Generator {
     pub min_max_reactive_limits: Option<MinMaxReactiveLimits>,
 }
 
-/// Structure pour la courbe de capacité réactive
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReactiveCapabilityCurve {
@@ -170,7 +193,6 @@ pub struct ReactiveCapabilityCurve {
     pub points: Vec<ReactiveCapabilityCurvePoint>,
 }
 
-/// Point de la courbe de capacité réactive
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReactiveCapabilityCurvePoint {
@@ -184,7 +206,6 @@ pub struct ReactiveCapabilityCurvePoint {
     pub max_q: f64,
 }
 
-/// Structure pour les limites réactives min-max
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MinMaxReactiveLimits {
@@ -195,7 +216,6 @@ pub struct MinMaxReactiveLimits {
     pub max_q: f64,
 }
 
-/// Structure représentant une charge
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Load {
@@ -224,7 +244,6 @@ pub struct Load {
     pub zip_model: Option<ZipLoadModel>,
 }
 
-/// Types de charge
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LoadType {
@@ -233,7 +252,6 @@ pub enum LoadType {
     Fictitious,
 }
 
-/// Modèle exponentiel de charge
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExponentialLoadModel {
@@ -250,7 +268,6 @@ pub struct ExponentialLoadModel {
     pub nq: f64,
 }
 
-/// Modèle ZIP de charge
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZipLoadModel {
@@ -279,7 +296,6 @@ pub struct ZipLoadModel {
     pub p_q: f64,
 }
 
-/// Structure pour la topologie bus-disjoncteur
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BusBreakerTopology {
@@ -290,7 +306,6 @@ pub struct BusBreakerTopology {
     pub switches: Vec<Switch>,
 }
 
-/// Structure pour la topologie nœud-disjoncteur
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeBreakerTopology {
@@ -307,21 +322,19 @@ pub struct NodeBreakerTopology {
     pub internal_connections: Vec<InternalConnection>,
 }
 
-/// Structure pour les bus calculés
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalculatedBus {
-    #[serde(rename = "@angle")]
+    #[serde(rename = "@angle", default)]
     pub angle: f64,
 
-    #[serde(rename = "@nodes")]
+    #[serde(rename = "@nodes", default)]
     pub nodes: Vec<String>,
 
-    #[serde(rename = "@v")]
+    #[serde(rename = "@v", default)]
     pub v: f64,
 }
 
-/// Structure pour les connexions internes
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InternalConnection {
     #[serde(rename = "@node1")]
@@ -331,14 +344,24 @@ pub struct InternalConnection {
     pub node2: i32,
 }
 
-/// Structure pour un bus
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Bus {
     #[serde(rename = "@id")]
     pub id: String,
+
+    #[serde(rename = "@v", default)]
+    pub v: f64,
+
+    #[serde(rename = "@angle", default)]
+    pub angle: f64,
+
+    #[serde(rename = "@nodes", default)]
+    pub nodes: Vec<String>,
+
+    #[serde(rename = "property", default)]
+    pub properties: Vec<Property>,
 }
 
-/// Structure pour une section de jeu de barres
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BusbarSection {
@@ -352,7 +375,6 @@ pub struct BusbarSection {
     pub node: i32,
 }
 
-/// Structure pour un transformateur à deux enroulements
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TwoWindingsTransformer {
@@ -408,7 +430,6 @@ pub struct TwoWindingsTransformer {
     pub current_limits2: Option<CurrentLimits>,
 }
 
-/// Structure pour un transformateur à trois enroulements
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThreeWindingsTransformer {
@@ -503,7 +524,6 @@ pub struct ThreeWindingsTransformer {
     pub current_limits3: Option<CurrentLimits>,
 }
 
-/// Structure pour un régleur en charge
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RatioTapChanger {
@@ -1201,7 +1221,6 @@ pub struct SubGeographicalRegion {
     pub region_id: String,
 }
 
-/// Structure pour les valeurs de tension
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoltageLevelData {
@@ -1215,7 +1234,6 @@ pub struct VoltageLevelData {
     pub low_voltage_limit: f64,
 }
 
-/// Structure pour un groupe de sous-stations
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubstationGroup {
@@ -1229,14 +1247,12 @@ pub struct SubstationGroup {
     pub substation_refs: Vec<SubstationRef>,
 }
 
-/// Structure pour une référence à une sous-station
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SubstationRef {
     #[serde(rename = "@id")]
     pub id: String,
 }
 
-/// Structure pour un groupe de lignes
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LineGroup {
@@ -1250,14 +1266,12 @@ pub struct LineGroup {
     pub line_refs: Vec<LineRef>,
 }
 
-/// Structure pour une référence à une ligne
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LineRef {
     #[serde(rename = "@id")]
     pub id: String,
 }
 
-/// Structure pour un groupe de liaisons HVDC
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HvdcLineGroup {
@@ -1271,14 +1285,12 @@ pub struct HvdcLineGroup {
     pub hvdc_line_refs: Vec<HvdcLineRef>,
 }
 
-/// Structure pour une référence à une liaison HVDC
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HvdcLineRef {
     #[serde(rename = "@id")]
     pub id: String,
 }
 
-/// Structure pour une équation PSSE
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PsseModel {
@@ -1292,7 +1304,6 @@ pub struct PsseModel {
     pub parameters: Vec<PsseParameter>,
 }
 
-/// Structure pour un paramètre PSSE
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PsseParameter {
     #[serde(rename = "@name", default)]
@@ -1302,7 +1313,6 @@ pub struct PsseParameter {
     pub value: f64,
 }
 
-/// Structure pour un contingent
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Contingency {
@@ -1316,7 +1326,6 @@ pub struct Contingency {
     pub elements: Vec<ContingencyElement>,
 }
 
-/// Structure pour un élément de contingent
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContingencyElement {
@@ -1327,7 +1336,6 @@ pub struct ContingencyElement {
     pub element_type: ContingencyElementType,
 }
 
-/// Types d'éléments de contingent
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContingencyElementType {
@@ -1340,7 +1348,6 @@ pub enum ContingencyElementType {
     DanglingLine,
 }
 
-/// Structure pour les méta-données
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
@@ -1351,7 +1358,6 @@ pub struct Metadata {
     pub value: String,
 }
 
-/// Structure pour un nœud topologique
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TopologicalNode {
@@ -1365,7 +1371,6 @@ pub struct TopologicalNode {
     pub voltage_level_id: String,
 }
 
-/// Structure pour l'état initial
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InitialState {
@@ -1380,58 +1385,4 @@ pub struct InitialState {
 
     #[serde(rename = "@angle")]
     pub angle: f64,
-}
-
-/// Structure pour les paramètres de calcul de flux de puissance
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LoadFlowParameters {
-    #[serde(rename = "@voltageInitMode")]
-    pub voltage_init_mode: VoltageInitMode,
-
-    #[serde(rename = "@transformerVoltageControlOn")]
-    pub transformer_voltage_control_on: bool,
-
-    #[serde(rename = "@phaseShifterRegulationOn")]
-    pub phase_shifter_regulation_on: bool,
-
-    #[serde(rename = "@noGeneratorReactiveLimits")]
-    pub no_generator_reactive_limits: bool,
-
-    #[serde(rename = "@specificCompatibility")]
-    pub specific_compatibility: bool,
-}
-
-/// Modes d'initialisation de tension
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum VoltageInitMode {
-    Dc,
-    Uniform,
-    Previous,
-    Flat,
-}
-
-/// Types de paramètre de limites
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum LimitType {
-    Apparent,
-    Active,
-    Current,
-    Voltage,
-}
-
-/// Structure pour les paramètres de sécurité N-1
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SecurityAnalysisParameters {
-    #[serde(rename = "@loadFlowParameters")]
-    pub load_flow_parameters: Option<LoadFlowParameters>,
-
-    #[serde(rename = "@limitReduction")]
-    pub limit_reduction: f64,
-
-    #[serde(rename = "@limitType")]
-    pub limit_type: LimitType,
 }
