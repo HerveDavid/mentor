@@ -1,5 +1,6 @@
 use bevy_ecs::prelude::*;
 
+use crate::identifiable::Identifiables;
 use crate::{AssetRegistry, Identifiable, Updatable};
 
 #[derive(Event)]
@@ -68,22 +69,17 @@ pub fn handle_update_events<T: Component + Updatable>(
 }
 
 #[derive(Event)]
-pub struct RegisterEvent<T: Component + Identifiable>
-where
-    T: 'static,
-{
+pub struct RegisterEvent {
     pub id: String,
-    pub component: T,
+    pub component: Identifiables,
 }
 
-pub fn handle_register_events<T: Component + Identifiable + Clone>(
-    mut register_events: EventReader<RegisterEvent<T>>,
+pub fn handle_register_events(
+    mut register_events: EventReader<RegisterEvent>,
     mut commands: Commands,
     mut registery: ResMut<AssetRegistry>,
-) where
-    T: 'static,
-{
-    for RegisterEvent { id, component } in register_events.read() {
-        registery.add_component(&mut commands, id, component.clone());
+) {
+    for RegisterEvent { id: _, component } in register_events.read() {
+        component.register_in_registry(&mut commands, &mut registery);
     }
 }

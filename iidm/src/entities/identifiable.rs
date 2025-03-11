@@ -1,21 +1,21 @@
+use bevy_ecs::component::Component;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 
 use super::xml::*;
 
 #[enum_dispatch(Identifiable)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Component)]
 pub enum Identifiables {
     Network,
-    Line,
     Substation,
     VoltageLevel,
     Generator,
     Load,
-    Bus,
     BusbarSection,
     TwoWindingsTransformer,
     ThreeWindingsTransformer,
+    Line,
     Switch,
     ShuntCompensator,
     StaticVarCompensator,
@@ -23,17 +23,22 @@ pub enum Identifiables {
     TieLine,
     HvdcLine,
     HvdcConverterStation,
+    Battery,
+    SeriesCompensator,
+    LccConverterStation,
+    VscConverterStation,
+    Filter,
+    GeographicalRegion,
+    SubGeographicalRegion,
+    SubstationGroup,
+    SubstationRef,
+    LineGroup,
+    LineRef,
+    HvdcLineGroup,
+    HvdcLineRef,
+    Contingency,
+    ContingencyElement,
+    TopologicalNode,
     TerminalRef,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn coucou() {
-        // let n = Identifiables::from(Network::default());
-        // let i = n.id();
-        // assert_eq!(i, "");
-    }
+    Bus,
 }

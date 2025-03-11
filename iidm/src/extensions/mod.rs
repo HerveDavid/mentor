@@ -1,16 +1,24 @@
+use bevy_ecs::prelude::*;
 use enum_dispatch::enum_dispatch;
-pub use iidm_derive::{Identifiable, Updatable};
-
-use bevy_ecs::{schedule::Schedule, world::World};
 use serde::{Deserialize, Serialize};
 
 use super::identifiable::Identifiables;
+use super::resources::AssetRegistry;
 use super::xml::*;
 
+pub use iidm_derive::{Identifiable, Updatable};
+
 #[enum_dispatch]
-pub trait Identifiable {
+pub trait Identifiable: Clone + Component {
     fn id(&self) -> String;
     fn register(&self, world: &mut World, schedule: &mut Schedule);
+    fn register_in_registry(
+        &self,
+        mut commands: &mut Commands,
+        registery: &mut ResMut<AssetRegistry>,
+    ) {
+        registery.add_component(&mut commands, self.id(), self.clone());
+    }
 }
 
 pub trait Updatable: Sized + Serialize + for<'de> Deserialize<'de> {

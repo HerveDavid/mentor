@@ -1,6 +1,4 @@
-use derive_more::Display;
 use iidm::xml::*;
-use quick_xml::DeError;
 
 const NETWORK_XML: &str = "tests/data/network.xiidm";
 const HEAVY_NETWORK_XML: &str = "tests/data/PtFige-20250212-1455-enrichi.xiidm";
@@ -178,74 +176,11 @@ fn test_deserialize_from_xml() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// Définition d'un type d'erreur personnalisé
-#[derive(Debug, Display)]
-pub enum IidmError {
-    #[display("Erreur de désérialisation XML: {}", _0)]
-    XmlDeserializationError(DeError),
-
-    #[display("Erreur d'entrée/sortie: {}", _0)]
-    IoError(std::io::Error),
-
-    #[display("Élément requis manquant: {} dans le type {}", element, type_name)]
-    MissingElement { element: String, type_name: String },
-
-    #[display("Valeur invalide pour {}: {} dans le type {}", field, value, type_name)]
-    InvalidValue {
-        field: String,
-        value: String,
-        type_name: String,
-    },
-
-    #[display("Erreur de validation dans le type {}: {}", type_name, message)]
-    ValidationError { type_name: String, message: String },
-}
-
-use std::error::Error as StdError;
-
-// Implémentation manuelle de std::error::Error
-impl StdError for IidmError {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        match self {
-            IidmError::XmlDeserializationError(e) => Some(e),
-            IidmError::IoError(e) => Some(e),
-            IidmError::MissingElement { .. } => None,
-            IidmError::InvalidValue { .. } => None,
-            IidmError::ValidationError { .. } => None,
-        }
-    }
-}
-
-// Conversions depuis d'autres types d'erreurs
-impl From<DeError> for IidmError {
-    fn from(err: DeError) -> Self {
-        IidmError::XmlDeserializationError(err)
-    }
-}
-
-impl From<std::io::Error> for IidmError {
-    fn from(err: std::io::Error) -> Self {
-        IidmError::IoError(err)
-    }
-}
-// Alias de type pour Result avec notre erreur personnalisée
-pub type IidmResult<T> = Result<T, IidmError>;
-
-// Fonction pour charger un réseau depuis un fichier XML
-pub fn load_network(xml_data: &str) -> IidmResult<Network> {
-    match quick_xml::de::from_str(xml_data) {
-        Ok(network) => {
-            // Validation supplémentaire si nécessaire
-            Ok(network)
-        }
-        Err(e) => Err(IidmError::from(e)),
-    }
-}
-
 #[test]
+#[ignore = "manualy test file is too large"]
 fn test_load_heavy_xml() -> Result<(), Box<dyn std::error::Error>> {
     let test_network = std::fs::read_to_string(HEAVY_NETWORK_XML)?;
-    let network: Network = load_network(&test_network)?;
+    let network: Network = quick_xml::de::from_str(&test_network)?;
 
     // Vérification des informations de base du réseau
     assert_eq!(network.id, "PtFige-20250212-1455-enrichi");

@@ -2,12 +2,10 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Type};
 
-// Implementation de base du trait Identifiable
 pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    // Implémentation récursive pour tous les champs
     let register_impl = generate_register_impl(&ast.data);
 
     let expanded = quote! {
@@ -17,16 +15,14 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
             }
 
             fn register(&self, world: &mut bevy_ecs::world::World, schedule: &mut bevy_ecs::schedule::Schedule) {
-                // S'enregistrer soi-même d'abord
                 {
-                    let mut event_writer = world.resource_mut::<bevy_ecs::event::Events<crate::plugins::RegisterEvent<Self>>>();
+                    let mut event_writer = world.resource_mut::<bevy_ecs::event::Events<crate::plugins::RegisterEvent>>();
                     event_writer.send(crate::plugins::RegisterEvent {
                         id: self.id(),
-                        component: self.clone(),
+                        component: crate::identifiable::Identifiables::#name(self.clone()),
                     });
                 }
 
-                // Puis enregistrer récursivement tous les champs identifiables
                 #register_impl
 
                 schedule.run(world);

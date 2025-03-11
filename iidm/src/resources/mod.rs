@@ -18,7 +18,7 @@ impl Id {
 /// Registry for managing entities with unique identifiers
 #[derive(Resource, Default)]
 pub struct AssetRegistry {
-    entities: HashMap<String, Entity>,
+    pub entities: HashMap<String, Entity>,
 }
 
 impl AssetRegistry {
