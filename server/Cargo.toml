@@ -19,3 +19,5 @@ tokio-stream = { version = "0.1.17", features = ["sync"] }
 tower-http = { version="0.6.2", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+quick-xml = { version = "0.37.2", features = ["serialize"] }
+tempfile = "3.18.0"

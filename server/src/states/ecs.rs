@@ -126,6 +126,7 @@ impl Default for EcsState {
         let sse_registry = SseRegistry::default();
 
         // Init Resources and Systems
+        world.init_resource::<Events<RegisterEvent>>();
         // init_identifiable_component(&mut world, &mut schedule);
         // init_updatable_components(&mut world, &mut schedule, &mut update_registry);
 
