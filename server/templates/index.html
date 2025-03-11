@@ -2,20 +2,28 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>HTMX Rust Demo</title>
+    <title>IIDM Upload - Fichiers volumineux</title>
     <script src="/static/js/htmx.min.js"></script>
     <script src="/static/js/tailwind.min.js"></script>
+    <style>
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 0.75rem;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div id="iidm-upload" class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
         <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Upload IIDM</h2>
         
-        <form hx-post="/api/iidm/upload"
-              hx-target="#iidm-table"
-              method="POST"
-              hx-encoding="multipart/form-data"
-              class="space-y-6">
-            
+        <form id="upload-form" class="space-y-6">
             <div class="flex flex-col items-center justify-center w-full">
                 <label for="iidm_file" 
                        class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
@@ -26,7 +34,9 @@
                         <p class="mb-2 text-sm text-gray-500">
                             <span class="font-semibold">Cliquez pour uploader</span> ou glissez-déposez
                         </p>
-                        <p class="text-xs text-gray-500">Fichier JSON uniquement</p>
+                        <p class="text-xs text-gray-500">Fichier XML volumineux supporté (>200 Mo)</p>
+                        <p id="file-name" class="mt-2 text-sm font-medium text-gray-700">Aucun fichier sélectionné</p>
+                        <p id="file-size" class="text-xs text-gray-500"></p>
                     </div>
                     <input type="file"
                            id="iidm_file"
@@ -35,16 +45,122 @@
                            class="hidden" />
                 </label>
             </div>
-
+            
+            <!-- Section de progression -->
+            <div id="progress-container" class="hidden">
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700">Progression</span>
+                    <span id="progress-percent" class="text-sm font-medium text-gray-700">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <p id="upload-status" class="mt-2 text-sm text-gray-500">En attente...</p>
+            </div>
+            
             <div class="flex justify-center">
                 <button type="submit"
+                        id="submit-button"
                         class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 ease-in-out hover:scale-105">
                     Envoyer le fichier
                 </button>
             </div>
         </form>
     </div>
-
-    <div id="iidm-table" class="mt-8"></div>
+    <div id="iidm-table" class="mt-8 max-w-6xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6"></div>
+    
+    <script>
+        // Afficher les informations du fichier sélectionné
+        document.getElementById('iidm_file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('file-name').textContent = file.name;
+                const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                document.getElementById('file-size').textContent = `${fileSize} Mo`;
+            } else {
+                document.getElementById('file-name').textContent = "Aucun fichier sélectionné";
+                document.getElementById('file-size').textContent = "";
+            }
+        });
+        
+        // Gérer l'envoi du formulaire avec XMLHttpRequest pour le support des fichiers volumineux
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const fileInput = document.getElementById('iidm_file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("Veuillez sélectionner un fichier.");
+                return;
+            }
+            
+            // Afficher la barre de progression
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('upload-status').textContent = "Préparation de l'upload...";
+            
+            // Désactiver le bouton pendant l'upload
+            document.getElementById('submit-button').disabled = true;
+            document.getElementById('submit-button').classList.add('opacity-50');
+            
+            // Créer un objet FormData
+            const formData = new FormData();
+            formData.append('iidm_file', file);
+            
+            // Créer et configurer la requête XHR
+            const xhr = new XMLHttpRequest();
+            
+            // Gérer les événements de progression
+            xhr.upload.addEventListener('progress', function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    
+                    // Mettre à jour la barre de progression
+                    document.getElementById('progress-bar-fill').style.width = percentComplete + '%';
+                    document.getElementById('progress-percent').textContent = percentComplete + '%';
+                    
+                    // Mettre à jour le statut
+                    if (percentComplete < 100) {
+                        document.getElementById('upload-status').textContent = `Téléchargement en cours (${(event.loaded / (1024 * 1024)).toFixed(2)} Mo / ${(event.total / (1024 * 1024)).toFixed(2)} Mo)`;
+                    } else {
+                        document.getElementById('upload-status').textContent = "Traitement du fichier sur le serveur...";
+                    }
+                }
+            });
+            
+            // Gérer la fin de la requête
+            xhr.addEventListener('load', function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    document.getElementById('upload-status').textContent = "Téléchargement réussi!";
+                    document.getElementById('iidm-table').innerHTML = xhr.responseText;
+                } else {
+                    document.getElementById('upload-status').textContent = "Erreur: " + xhr.statusText;
+                }
+                
+                // Réactiver le bouton
+                document.getElementById('submit-button').disabled = false;
+                document.getElementById('submit-button').classList.remove('opacity-50');
+            });
+            
+            // Gérer les erreurs
+            xhr.addEventListener('error', function() {
+                document.getElementById('upload-status').textContent = "Erreur de réseau lors de l'upload.";
+                document.getElementById('submit-button').disabled = false;
+                document.getElementById('submit-button').classList.remove('opacity-50');
+            });
+            
+            // Gérer les timeouts
+            xhr.addEventListener('timeout', function() {
+                document.getElementById('upload-status').textContent = "L'upload a expiré. Le fichier est peut-être trop volumineux.";
+                document.getElementById('submit-button').disabled = false;
+                document.getElementById('submit-button').classList.remove('opacity-50');
+            });
+            
+            // Configurer et démarrer la requête
+            xhr.open('POST', '/api/iidm/upload', true);
+            xhr.timeout = 3600000; // 1 heure en millisecondes
+            xhr.send(formData);
+        });
+    </script>
 </body>
 </html>

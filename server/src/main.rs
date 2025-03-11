@@ -34,7 +34,7 @@ async fn main() {
         .route("/api/iidm/stream/{component_type}/{id}", get(stream_iidm))
         .nest_service("/static", get_service(ServeDir::new(static_path)))
         .layer(TraceLayer::new_for_http())
-        .layer(RequestBodyLimitLayer::new(200 * 1024 * 1024))
+        .layer(RequestBodyLimitLayer::new(300 * 1024 * 1024))
         .with_state(Arc::new(AppState::default()));
 
     // Start server

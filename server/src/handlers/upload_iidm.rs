@@ -67,6 +67,7 @@ pub async fn upload_iidm(
     }
 }
 
+// Modifiez la fonction process_upload pour optimiser la gestion des gros fichiers
 async fn process_upload(multipart: &mut Multipart) -> Result<Network, UploadError> {
     while let Some(mut field) = multipart
         .next_field()
@@ -74,57 +75,59 @@ async fn process_upload(multipart: &mut Multipart) -> Result<Network, UploadErro
         .map_err(UploadError::MultipartError)?
     {
         if field.name() == Some("iidm_file") {
+            // Augmenter la taille du buffer pour les fichiers volumineux
+            const CHUNK_SIZE: usize = 8 * 1024 * 1024; // 8MB par morceau pour plus d'efficacité
+
             // Créer un fichier temporaire nommé
             let named_temp_file = NamedTempFile::new()?;
             let temp_path = named_temp_file.path().to_owned();
-
-            // Convertir en fichier Tokio
             let file_path = temp_path.to_string_lossy().to_string();
+
+            // Créer le fichier avec tokio
             let mut file = tokio::fs::File::create(&file_path).await?;
 
-            // Lire le contenu du champ et l'écrire dans le fichier
-            // Au lieu de stream, on utilise bytes() qui est une méthode existante
-            // mais on traite par morceaux pour éviter de charger tout en mémoire
-            const CHUNK_SIZE: usize = 1024 * 1024; // 1MB par morceau
+            // Lire et écrire par morceaux
             let mut bytes_read = 0;
-            loop {
-                let chunk_data = field.chunk().await.map_err(UploadError::MultipartError)?;
 
-                if let Some(data) = chunk_data {
-                    file.write_all(&data).await?;
-                    bytes_read += data.len();
+            // Pour les fichiers très volumineux, utilisez une approche efficace
+            while let Some(chunk) = field.chunk().await.map_err(UploadError::MultipartError)? {
+                file.write_all(&chunk).await?;
+                bytes_read += chunk.len();
 
-                    // On continue à lire le prochain morceau
-                    if data.len() < CHUNK_SIZE {
-                        break; // C'était probablement le dernier morceau
-                    }
-                } else {
-                    break; // Plus de données à lire
+                // Évitez de flush après chaque morceau pour plus d'efficacité
+                // sauf si c'est un petit morceau (qui pourrait être le dernier)
+                if chunk.len() < CHUNK_SIZE {
+                    file.flush().await?;
                 }
             }
 
-            // S'assurer que toutes les données sont écrites et fermer le fichier
+            // Finaliser l'écriture
             file.flush().await?;
             file.sync_all().await?;
-            drop(file); // Fermer explicitement le fichier
+            drop(file);
 
-            // Si aucun octet n'a été lu, on a un problème
             if bytes_read == 0 {
                 return Err(UploadError::NoFile);
             }
 
-            // Ouvrir avec std::fs pour le parsing
+            // Pour les fichiers volumineux, utilisez une approche de parsing plus efficace
+            // Par exemple, utiliser un Reader au lieu de charger tout le contenu en mémoire
             let std_file = std::fs::File::open(&file_path)?;
-            let reader = BufReader::new(std_file);
+            let reader = BufReader::with_capacity(CHUNK_SIZE, std_file); // Augmenter la capacité du buffer
 
-            // Utiliser quick_xml standard
+            // Utiliser quick_xml avec configuration optimisée
             let network = match quick_xml::de::from_reader(reader) {
                 Ok(network) => network,
-                Err(_e) => {
-                    // En cas d'erreur, on peut essayer une approche alternative
-                    // Par exemple, lire le fichier en tant que chaîne de caractères
-                    let xml_content = std::fs::read_to_string(&file_path)?;
-                    quick_xml::de::from_str(&xml_content).map_err(UploadError::XmlError)?
+                Err(e) => {
+                    eprintln!("Erreur lors du parsing XML: {}", e);
+
+                    // Approche alternative si nécessaire
+                    // Pour les fichiers vraiment volumineux, il peut être plus efficace d'utiliser
+                    // un parser événementiel plutôt que de_from_str qui chargerait tout en mémoire
+                    let fallback_reader = std::fs::File::open(&file_path)?;
+                    let fallback_buf_reader = BufReader::with_capacity(CHUNK_SIZE, fallback_reader);
+                    quick_xml::de::from_reader(fallback_buf_reader)
+                        .map_err(UploadError::XmlError)?
                 }
             };
 
