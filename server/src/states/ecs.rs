@@ -14,97 +14,97 @@ fn assert_identifiable<T: Identifiable>() {}
 fn assert_component<T: ComponentInit>() {}
 fn assert_updatable<T: Updatable>() {}
 
-macro_rules! init_identifiable_components {
-    ($($component:ty),* $(,)?) => {
-        fn init_identifiable_component(world: &mut World, schedule: &mut Schedule) {
-            $(
-                // Static verification that the type implements Identifiable
-                assert_identifiable::<$component>();
+// macro_rules! init_identifiable_components {
+//     ($($component:ty),* $(,)?) => {
+//         fn init_identifiable_component(world: &mut World, schedule: &mut Schedule) {
+//             $(
+//                 // Static verification that the type implements Identifiable
+//                 assert_identifiable::<$component>();
 
-                // Static verification that the type is a valid component
-                assert_component::<$component>();
+//                 // Static verification that the type is a valid component
+//                 assert_component::<$component>();
 
-                world.init_resource::<Events<RegisterEvent<$component>>>();
-                schedule.add_systems(iidm::handle_register_events::<$component>);
-            )*
-        }
-    };
-}
+//                 world.init_resource::<Events<RegisterEvent<$component>>>();
+//                 schedule.add_systems(iidm::handle_register_events::<$component>);
+//             )*
+//         }
+//     };
+// }
 
-macro_rules! init_updatable_components {
-    ($($component:ty),* $(,)?) => {
-        fn init_updatable_components(world: &mut World, schedule: &mut Schedule, updater: &mut UpdateRegistry) {
-             $(
-                // Static verification that the type implements Updatable
-                assert_updatable::<$component>();
-                // Static verification that the type is a valid component
-                assert_component::<$component>();
-                world.init_resource::<Events<UpdateEvent<$component>>>();
-                schedule.add_systems(iidm::handle_update_events::<$component>);
+// macro_rules! init_updatable_components {
+//     ($($component:ty),* $(,)?) => {
+//         fn init_updatable_components(world: &mut World, schedule: &mut Schedule, updater: &mut UpdateRegistry) {
+//              $(
+//                 // Static verification that the type implements Updatable
+//                 assert_updatable::<$component>();
+//                 // Static verification that the type is a valid component
+//                 assert_component::<$component>();
+//                 world.init_resource::<Events<UpdateEvent<$component>>>();
+//                 schedule.add_systems(iidm::handle_update_events::<$component>);
 
-                // Register component type with update registry in PascalCase
-                // Register component type with its corresponding updater and error types
-                updater.register::<$component, paste::paste! {[<$component Updater>]}, paste::paste! {[<$component Error>]}>(&stringify!($component));
-            )*
-        }
-    };
-}
+//                 // Register component type with update registry in PascalCase
+//                 // Register component type with its corresponding updater and error types
+//                 updater.register::<$component, paste::paste! {[<$component Updater>]}, paste::paste! {[<$component Error>]}>(&stringify!($component));
+//             )*
+//         }
+//     };
+// }
 
-init_identifiable_components!(
-    Network,
-    Line,
-    Substation,
-    VoltageLevel,
-    Generator,
-    Load,
-    Bus,
-    BusbarSection,
-    TwoWindingsTransformer,
-    ThreeWindingsTransformer,
-    Switch,
-    ShuntCompensator,
-    StaticVarCompensator,
-    DanglingLine,
-    TieLine,
-    HvdcLine,
-    HvdcConverterStation,
-    TerminalRef
-);
+// init_identifiable_components!(
+//     Network,
+//     Line,
+//     Substation,
+//     VoltageLevel,
+//     Generator,
+//     Load,
+//     Bus,
+//     BusbarSection,
+//     TwoWindingsTransformer,
+//     ThreeWindingsTransformer,
+//     Switch,
+//     ShuntCompensator,
+//     StaticVarCompensator,
+//     DanglingLine,
+//     TieLine,
+//     HvdcLine,
+//     HvdcConverterStation,
+//     TerminalRef
+// );
 
-init_updatable_components!(
-    Network,
-    Line,
-    Substation,
-    VoltageLevel,
-    Generator,
-    Load,
-    Bus,
-    BusbarSection,
-    TwoWindingsTransformer,
-    ThreeWindingsTransformer,
-    Switch,
-    ShuntCompensator,
-    StaticVarCompensator,
-    DanglingLine,
-    TieLine,
-    HvdcLine,
-    HvdcConverterStation,
-    ReactiveCapabilityCurve,
-    ReactiveCapabilityCurvePoint,
-    MinMaxReactiveLimits,
-    ExponentialLoadModel,
-    ZipLoadModel,
-    BusBreakerTopology,
-    NodeBreakerTopology,
-    Node,
-    InternalConnection,
-    RatioTapChanger,
-    PhaseTapChanger,
-    TapStep,
-    PhaseTapStep,
-    CurrentLimits,
-    TemporaryLimit
-);
+// init_updatable_components!(
+//     Network,
+//     Line,
+//     Substation,
+//     VoltageLevel,
+//     Generator,
+//     Load,
+//     Bus,
+//     BusbarSection,
+//     TwoWindingsTransformer,
+//     ThreeWindingsTransformer,
+//     Switch,
+//     ShuntCompensator,
+//     StaticVarCompensator,
+//     DanglingLine,
+//     TieLine,
+//     HvdcLine,
+//     HvdcConverterStation,
+//     ReactiveCapabilityCurve,
+//     ReactiveCapabilityCurvePoint,
+//     MinMaxReactiveLimits,
+//     ExponentialLoadModel,
+//     ZipLoadModel,
+//     BusBreakerTopology,
+//     NodeBreakerTopology,
+//     Node,
+//     InternalConnection,
+//     RatioTapChanger,
+//     PhaseTapChanger,
+//     TapStep,
+//     PhaseTapStep,
+//     CurrentLimits,
+//     TemporaryLimit
+// );
 
 pub struct EcsState {
     pub world: RwLock<World>,
@@ -126,8 +126,8 @@ impl Default for EcsState {
         let sse_registry = SseRegistry::default();
 
         // Init Resources and Systems
-        init_identifiable_component(&mut world, &mut schedule);
-        init_updatable_components(&mut world, &mut schedule, &mut update_registry);
+        // init_identifiable_component(&mut world, &mut schedule);
+        // init_updatable_components(&mut world, &mut schedule, &mut update_registry);
 
         // Init Errors handler
         world.insert_resource(Events::<EntityNotFoundEvent>::default());

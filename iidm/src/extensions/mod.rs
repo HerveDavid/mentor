@@ -4,19 +4,13 @@ pub use iidm_derive::{Identifiable, Updatable};
 use bevy_ecs::{schedule::Schedule, world::World};
 use serde::{Deserialize, Serialize};
 
-use crate::entities::identifiable::Identifiables;
-use crate::entities::updatable::{Updatables, Updaters};
-use crate::entities::*;
+use super::identifiable::Identifiables;
+use super::xml::*;
 
 #[enum_dispatch]
 pub trait Identifiable {
     fn id(&self) -> String;
     fn register(&self, world: &mut World, schedule: &mut Schedule);
-}
-
-#[enum_dispatch]
-pub trait UpdatableExt {
-    fn update_ext(&mut self, updater: Updaters);
 }
 
 pub trait Updatable: Sized + Serialize + for<'de> Deserialize<'de> {

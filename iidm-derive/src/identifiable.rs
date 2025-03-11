@@ -1,21 +1,23 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Type, TypePath};
+use syn::{Data, DeriveInput, Fields, Type};
 
+// Implementation de base du trait Identifiable
 pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
     let name = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
-    // Générer l'implémentation pour tous les champs
+    // Implémentation récursive pour tous les champs
     let register_impl = generate_register_impl(&ast.data);
 
     let expanded = quote! {
-        impl Identifiable for #name {
+        impl #impl_generics crate::extensions::Identifiable for #name #ty_generics #where_clause {
             fn id(&self) -> String {
                 self.id.clone()
             }
 
             fn register(&self, world: &mut bevy_ecs::world::World, schedule: &mut bevy_ecs::schedule::Schedule) {
-                // Register self first
+                // S'enregistrer soi-même d'abord
                 {
                     let mut event_writer = world.resource_mut::<bevy_ecs::event::Events<crate::plugins::RegisterEvent<Self>>>();
                     event_writer.send(crate::plugins::RegisterEvent {
@@ -24,7 +26,7 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
                     });
                 }
 
-                // Then recursively register all identifiable fields
+                // Puis enregistrer récursivement tous les champs identifiables
                 #register_impl
 
                 schedule.run(world);
@@ -32,42 +34,41 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
         }
     };
 
-    expanded.into()
+    expanded
 }
 
-pub fn generate_register_impl(data: &Data) -> TokenStream {
+// Générer du code pour enregistrer les champs qui semblent être identifiables
+fn generate_register_impl(data: &Data) -> TokenStream {
     match data {
         Data::Struct(data_struct) => {
             match &data_struct.fields {
                 Fields::Named(fields) => {
-                    let field_registers = fields.named.iter().map(|field| {
+                    // On ne génère du code que pour les champs qui sont probablement Identifiable
+                    let field_registers = fields.named.iter().filter_map(|field| {
                         let field_name = &field.ident;
                         let field_type = &field.ty;
 
-                        // Check if field type implements Identifiable
-                        if is_identifiable_type(field_type) {
-                            // Handle Vec<T> where T: Identifiable
-                            if let Type::Path(TypePath { path, .. }) = field_type {
-                                if path
-                                    .segments
-                                    .last()
-                                    .map(|s| s.ident == "Vec")
-                                    .unwrap_or(false)
-                                {
-                                    return quote! {
-                                        for item in &self.#field_name {
-                                            item.register(world, schedule);
-                                        }
-                                    };
-                                }
-                            }
+                        // Ignorer les types primitifs et les enums
+                        if is_primitive_or_enum(field_type) {
+                            return None;
+                        }
 
-                            // Handle single Identifiable field
-                            quote! {
-                                self.#field_name.register(world, schedule);
-                            }
+                        // Traiter les vecteurs et les types normaux
+                        if is_vec_type(field_type) {
+                            Some(quote! {
+                                // Pour les vecteurs, on tente d'enregistrer chaque élément
+                                for item in &self.#field_name {
+                                    // On va supposer que tout élément d'un vecteur qui n'est pas
+                                    // considéré comme primitif ou enum pourrait implémenter Identifiable
+                                    item.register(world, schedule);
+                                }
+                            })
                         } else {
-                            quote! {}
+                            // Pour les champs ordinaires
+                            Some(quote! {
+                                // On suppose que le champ implémente Identifiable
+                                self.#field_name.register(world, schedule);
+                            })
                         }
                     });
 
@@ -82,47 +83,51 @@ pub fn generate_register_impl(data: &Data) -> TokenStream {
     }
 }
 
-fn is_identifiable_type(ty: &Type) -> bool {
+// Vérifier si un type est un Vec<T>
+fn is_vec_type(ty: &Type) -> bool {
     if let Type::Path(type_path) = ty {
-        let segments = &type_path.path.segments;
-        if let Some(last_segment) = segments.last() {
-            // Si c'est un Vec, regarder le type à l'intérieur
-            if last_segment.ident == "Vec" {
-                if let syn::PathArguments::AngleBracketed(args) = &last_segment.arguments {
+        if let Some(segment) = type_path.path.segments.last() {
+            return segment.ident == "Vec";
+        }
+    }
+    false
+}
+
+// Vérifier si un type est primitif ou un enum
+fn is_primitive_or_enum(ty: &Type) -> bool {
+    if let Type::Path(type_path) = ty {
+        if let Some(segment) = type_path.path.segments.last() {
+            let type_name = segment.ident.to_string();
+
+            // Vérifier d'abord si c'est un Vec pour examiner son contenu
+            if type_name == "Vec" {
+                if let syn::PathArguments::AngleBracketed(args) = &segment.arguments {
                     if let Some(syn::GenericArgument::Type(inner_type)) = args.args.first() {
-                        return is_identifiable_type(inner_type);
+                        return is_primitive_or_enum(inner_type);
                     }
                 }
                 return false;
             }
 
-            // Vérifier si le type lui-même est identifiable
-            let type_name = last_segment.ident.to_string();
-            matches!(
-                type_name.as_str(),
-                "Substation"
-                    | "Network"
-                    | "VoltageLevel"
-                    | "Generator"
-                    | "Load"
-                    | "Line"
-                    | "Switch"
-                    | "ShuntCompensator"
-                    | "StaticVarCompensator"
-                    | "DanglingLine"
-                    | "TieLine"
-                    | "HvdcLine"
-                    | "HvdcConverterStation"
-                    | "BusbarSection"
-                    | "TwoWindingsTransformer"
-                    | "ThreeWindingsTransformer"
-            )
-        } else {
-            false
+            // Types primitifs et conteneurs usuels
+            let primitives = [
+                "String", "i32", "i64", "f32", "f64", "bool", "char", "u8", "u16", "u32", "u64",
+                "usize", "isize", "Vec", "Option", "DateTime", "Property",
+            ];
+
+            if primitives.contains(&type_name.as_str()) {
+                return true;
+            }
+
+            // Types qui sont probablement des enums (convention de nommage)
+            return type_name.ends_with("Kind")
+                || type_name.ends_with("Type")
+                || type_name.ends_with("Mode")
+                || type_name == "Side"
+                || type_name == "EnergySource";
         }
-    } else {
-        false
     }
+    false
 }
 
 #[cfg(test)]
@@ -131,92 +136,55 @@ mod tests {
     use syn::parse_quote;
 
     #[test]
-    fn test_is_identifiable_type_basic() {
-        let type_substation: Type = parse_quote!(Substation);
+    fn test_is_vec_type() {
+        let vec_type: Type = parse_quote!(Vec<String>);
         assert!(
-            is_identifiable_type(&type_substation),
-            "Substation devrait être identifiable"
+            is_vec_type(&vec_type),
+            "Vec<String> should be detected as Vec"
         );
 
-        let type_string: Type = parse_quote!(String);
+        let non_vec_type: Type = parse_quote!(String);
         assert!(
-            !is_identifiable_type(&type_string),
-            "String ne devrait pas être identifiable"
-        );
-    }
-
-    #[test]
-    fn test_is_identifiable_type_vectors() {
-        // Test Vec<Substation>
-        let type_vec: Type = parse_quote!(Vec<Substation>);
-
-        // Debug pour voir la structure complète du type
-        if let Type::Path(type_path) = &type_vec {
-            if let Some(last_segment) = type_path.path.segments.last() {
-                println!("Last segment: {:?}", last_segment.ident);
-                if let syn::PathArguments::AngleBracketed(args) = &last_segment.arguments {
-                    println!("Generic args: {:?}", args);
-                }
-            }
-        }
-
-        assert!(
-            is_identifiable_type(&type_vec),
-            "Vec<Substation> devrait être identifiable"
+            !is_vec_type(&non_vec_type),
+            "String should not be detected as Vec"
         );
     }
 
     #[test]
-    fn test_is_identifiable_type_all_types() {
-        // Test individuellement chaque type
-        let test_cases = [
-            (parse_quote!(Substation), true),
-            (parse_quote!(VoltageLevel), true),
-            (parse_quote!(Generator), true),
-            (parse_quote!(Load), true),
-            (parse_quote!(Line), true),
-            (parse_quote!(Switch), true),
-            (parse_quote!(ShuntCompensator), true),
-            (parse_quote!(StaticVarCompensator), true),
-            (parse_quote!(DanglingLine), true),
-            (parse_quote!(TieLine), true),
-            (parse_quote!(HvdcLine), true),
-            (parse_quote!(HvdcConverterStation), true),
-            (parse_quote!(BusbarSection), true),
-            (parse_quote!(TwoWindingsTransformer), true),
-            (parse_quote!(ThreeWindingsTransformer), true),
-            (parse_quote!(String), false),
-            (parse_quote!(i32), false),
-        ];
+    fn test_is_primitive_or_enum() {
+        // Primitives
+        let string_type: Type = parse_quote!(String);
+        assert!(
+            is_primitive_or_enum(&string_type),
+            "String should be detected as primitive"
+        );
 
-        for (type_value, should_be_identifiable) in test_cases.iter() {
-            assert_eq!(
-                is_identifiable_type(type_value),
-                *should_be_identifiable,
-                "Type {:?} devrait {}être identifiable",
-                type_value,
-                if *should_be_identifiable {
-                    ""
-                } else {
-                    "ne pas "
-                }
-            );
-        }
-    }
+        // Enums (by naming convention)
+        let enum_type: Type = parse_quote!(TopologyKind);
+        assert!(
+            is_primitive_or_enum(&enum_type),
+            "TopologyKind should be detected as enum"
+        );
 
-    #[test]
-    fn test_type_path_structure() {
-        let type_hvdc: Type = parse_quote!(HvdcConverterStation);
-        if let Type::Path(type_path) = &type_hvdc {
-            let segment = type_path.path.segments.last().unwrap();
-            println!("Segment ident: {}", segment.ident);
-            println!("Segment span: {:?}", segment.ident.span());
+        // Regular struct types
+        let struct_type: Type = parse_quote!(Network);
+        assert!(
+            !is_primitive_or_enum(&struct_type),
+            "Network should not be detected as primitive or enum"
+        );
 
-            // Afficher plus de détails sur le chemin
-            println!("Path segments:");
-            for seg in type_path.path.segments.iter() {
-                println!("  - {}", seg.ident);
-            }
-        }
+        // Vector of enums
+        let vec_enum_type: Type = parse_quote!(Vec<EnergySource>);
+        assert!(
+            is_primitive_or_enum(&vec_enum_type),
+            "Vec<EnergySource> should be detected as containing enum"
+        );
+
+        // Vector of structs
+        let vec_struct_type: Type = parse_quote!(Vec<Network>);
+        assert!(
+            !is_primitive_or_enum(&vec_struct_type),
+            "Vec<Network> should not be detected as primitive or enum"
+        );
     }
 }

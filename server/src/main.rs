@@ -7,7 +7,7 @@ use axum::{
     routing::{get, get_service, post},
     Router,
 };
-use handlers::{index, stream_iidm, update_iidm, upload_iidm};
+use handlers::{index, stream_iidm, update_iidm};
 use states::AppState;
 use std::{path::PathBuf, sync::Arc};
 use tower_http::{limit::RequestBodyLimitLayer, services::ServeDir, trace::TraceLayer};
@@ -29,7 +29,7 @@ async fn main() {
     // Build routes
     let app = Router::new()
         .route("/", get(index))
-        .route("/api/iidm/upload", post(upload_iidm))
+        // .route("/api/iidm/upload", post(upload_iidm))
         .route("/api/iidm/update/{component_type}", post(update_iidm))
         .route("/api/iidm/stream/{component_type}/{id}", get(stream_iidm))
         .nest_service("/static", get_service(ServeDir::new(static_path)))
