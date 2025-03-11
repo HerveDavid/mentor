@@ -70,7 +70,6 @@ pub fn handle_update_events<T: Component + Updatable>(
 
 #[derive(Event)]
 pub struct RegisterEvent {
-    pub id: String,
     pub component: Identifiables,
 }
 
@@ -79,7 +78,7 @@ pub fn handle_register_events(
     mut commands: Commands,
     mut registery: ResMut<AssetRegistry>,
 ) {
-    for RegisterEvent { id: _, component } in register_events.read() {
-        component.register_in_registry(&mut commands, &mut registery);
+    for RegisterEvent { component } in register_events.read() {
+        component.register_system(&mut commands, &mut registery);
     }
 }

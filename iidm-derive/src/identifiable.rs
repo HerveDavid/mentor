@@ -18,7 +18,6 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
                 {
                     let mut event_writer = world.resource_mut::<bevy_ecs::event::Events<crate::plugins::RegisterEvent>>();
                     event_writer.send(crate::plugins::RegisterEvent {
-                        id: self.id(),
                         component: crate::identifiable::Identifiables::#name(self.clone()),
                     });
                 }
@@ -26,6 +25,10 @@ pub fn impl_identifiable_trait(ast: DeriveInput) -> TokenStream {
                 #register_impl
 
                 schedule.run(world);
+            }
+
+            fn register_system(&self, mut commands: &mut bevy_ecs::system::Commands, registery: &mut bevy_ecs::system::ResMut<crate::resources::AssetRegistry>) {
+                registery.add_component(&mut commands, self.id(), self.clone());
             }
         }
     };

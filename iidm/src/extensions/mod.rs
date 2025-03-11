@@ -12,13 +12,7 @@ pub use iidm_derive::{Identifiable, Updatable};
 pub trait Identifiable: Clone + Component {
     fn id(&self) -> String;
     fn register(&self, world: &mut World, schedule: &mut Schedule);
-    fn register_in_registry(
-        &self,
-        mut commands: &mut Commands,
-        registery: &mut ResMut<AssetRegistry>,
-    ) {
-        registery.add_component(&mut commands, self.id(), self.clone());
-    }
+    fn register_system(&self, commands: &mut Commands, registery: &mut ResMut<AssetRegistry>);
 }
 
 pub trait Updatable: Sized + Serialize + for<'de> Deserialize<'de> {
